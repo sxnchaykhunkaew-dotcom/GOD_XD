@@ -1,0 +1,971 @@
+--[[
+    NAMO V6 - DELTA MOBILE COMPATIBLE (FIXED)
+    Key: KEY_GOD_XD_V6
+]]
+
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local UIS = game:GetService("UserInputService")
+local Lighting = game:GetService("Lighting")
+local WS = game:GetService("Workspace")
+
+local LP = Players.LocalPlayer
+local Cam = WS.CurrentCamera
+local PGui = LP:WaitForChild("PlayerGui")
+
+pcall(function()
+    for _, n in ipairs({"NAMO_V6_Main","NAMO_V6_Key"}) do
+        if PGui:FindFirstChild(n) then PGui[n]:Destroy() end
+    end
+end)
+
+local S = {
+    Speed=false, SpeedVal=50,
+    Jump=false,  JumpVal=80,
+    InfJump=false,
+    Fly=false,   FlyVal=50,
+    Noclip=false,
+    AirWalk=false,
+    GodMode=false,
+    ESP=false,
+    Fullbright=false,
+    AntiAFK=false,
+    AutoRejoin=false,
+    Aimbot=false, AimSmooth=0.1,
+    KillAura=false, AuraRange=15,
+    Fling=false, FlingSpeed=5,
+}
+
+local AirPart, FlyVel, FlyGyro, FlingAV = nil, nil, nil, nil
+local SavedPos = nil
+local SelTP = nil
+local KEY = "KEY_GOD_XD_V6"
+local AirWalkY = nil
+
+local function newInst(cls, props, parent)
+    local o = Instance.new(cls)
+    for k,v in pairs(props) do o[k]=v end
+    if parent then o.Parent=parent end
+    return o
+end
+
+local function corner(r, parent)
+    return newInst("UICorner",{CornerRadius=UDim.new(0,r)},parent)
+end
+
+local function stroke(c, t, parent)
+    return newInst("UIStroke",{Color=c,Thickness=t},parent)
+end
+
+local KGui = newInst("ScreenGui",{
+    Name="NAMO_V6_Key",
+    ResetOnSpawn=false,
+    IgnoreGuiInset=true,
+    Parent=PGui
+})
+
+local KFrame = newInst("Frame",{
+    Size=UDim2.new(0,290,0,200),
+    Position=UDim2.new(0.5,-145,0.5,-100),
+    BackgroundColor3=Color3.fromRGB(14,14,18),
+    BorderSizePixel=0,
+    Active=true,
+    Draggable=true,
+    Parent=KGui
+})
+corner(12,KFrame)
+stroke(Color3.fromRGB(220,0,40),2,KFrame)
+
+newInst("TextLabel",{
+    Size=UDim2.new(1,0,0,36),
+    Position=UDim2.new(0,0,0,8),
+    Text="🔑 NAMO V6 | KEY SYSTEM",
+    TextColor3=Color3.fromRGB(220,60,60),
+    TextSize=14,
+    Font=Enum.Font.SourceSansBold,
+    BackgroundTransparency=1,
+    ZIndex=2,
+    Parent=KFrame
+})
+
+local KInput = newInst("TextBox",{
+    Size=UDim2.new(0.86,0,0,36),
+    Position=UDim2.new(0.07,0,0,52),
+    BackgroundColor3=Color3.fromRGB(26,26,32),
+    TextColor3=Color3.fromRGB(255,255,255),
+    PlaceholderText="ใส่คีย์...",
+    PlaceholderColor3=Color3.fromRGB(90,90,90),
+    Text="",
+    Font=Enum.Font.SourceSans,
+    TextSize=13,
+    ClearTextOnFocus=false,
+    ZIndex=2,
+    Parent=KFrame
+})
+corner(7,KInput)
+
+local KStatus = newInst("TextLabel",{
+    Size=UDim2.new(1,0,0,20),
+    Position=UDim2.new(0,0,0,94),
+    Text="",
+    TextColor3=Color3.fromRGB(255,80,80),
+    TextSize=11,
+    Font=Enum.Font.SourceSans,
+    BackgroundTransparency=1,
+    ZIndex=2,
+    Parent=KFrame
+})
+
+local function makeBtn(parent,text,bg,pos,sz)
+    local b = newInst("TextButton",{
+        Size=sz or UDim2.new(0.4,0,0,34),
+        Position=pos,
+        Text=text,
+        BackgroundColor3=bg,
+        TextColor3=Color3.fromRGB(255,255,255),
+        Font=Enum.Font.SourceSansBold,
+        TextSize=12,
+        ZIndex=3,
+        Parent=parent
+    })
+    corner(7,b)
+    return b
+end
+
+local VBtn = makeBtn(KFrame,"✅ ยืนยัน",
+    Color3.fromRGB(0,145,0),UDim2.new(0.07,0,0,122))
+local CBtn = makeBtn(KFrame,"📋 คัดลอกลิ้ง",
+    Color3.fromRGB(38,38,50),UDim2.new(0.53,0,0,122))
+
+CBtn.MouseButton1Click:Connect(function()
+    pcall(setclipboard,KEY)
+    pcall(toclipboard,KEY)
+    CBtn.Text="✅ คัดลอกแล้ว!"
+    task.wait(2); CBtn.Text="📋 คัดลอกลิ้ง"
+end)
+
+local MGui = newInst("ScreenGui",{
+    Name="NAMO_V6_Main",
+    ResetOnSpawn=false,
+    IgnoreGuiInset=true,
+    Enabled=false,
+    Parent=PGui
+})
+
+local TBtn = newInst("TextButton",{
+    Size=UDim2.new(0,46,0,46),
+    Position=UDim2.new(0,6,0.5,-23),
+    Text="V6",
+    TextSize=13,
+    Font=Enum.Font.SourceSansBold,
+    TextColor3=Color3.fromRGB(255,255,255),
+    BackgroundColor3=Color3.fromRGB(14,14,18),
+    Active=true,
+    Draggable=true,
+    ZIndex=10,
+    Parent=MGui
+})
+corner(12,TBtn)
+stroke(Color3.fromRGB(220,0,40),1.5,TBtn)
+
+local MF = newInst("Frame",{
+    Size=UDim2.new(0,340,0,320),
+    Position=UDim2.new(0.5,-170,0.5,-160),
+    BackgroundColor3=Color3.fromRGB(14,14,18),
+    BorderSizePixel=0,
+    Active=true,
+    Draggable=true,
+    ClipsDescendants=true,
+    ZIndex=2,
+    Parent=MGui
+})
+corner(12,MF)
+stroke(Color3.fromRGB(220,0,40),1.5,MF)
+
+local HF = newInst("Frame",{
+    Size=UDim2.new(1,0,0,32),
+    BackgroundColor3=Color3.fromRGB(20,20,26),
+    BorderSizePixel=0,
+    ZIndex=4,
+    Parent=MF
+})
+corner(10,HF)
+
+newInst("TextLabel",{
+    Size=UDim2.new(1,-36,1,0),
+    Position=UDim2.new(0,8,0,0),
+    Text="⚡ NAMO V6  |  DELTA MOBILE",
+    TextColor3=Color3.fromRGB(220,60,60),
+    Font=Enum.Font.SourceSansBold,
+    TextSize=12,
+    TextXAlignment=Enum.TextXAlignment.Left,
+    BackgroundTransparency=1,
+    ZIndex=5,
+    Parent=HF
+})
+
+local XB = makeBtn(HF,"✕",Color3.fromRGB(170,0,0),
+    UDim2.new(1,-28,0,4),UDim2.new(0,24,0,24))
+XB.MouseButton1Click:Connect(function() MF.Visible=false end)
+
+newInst("Frame",{
+    Size=UDim2.new(1,0,0,1),
+    Position=UDim2.new(0,0,0,32),
+    BackgroundColor3=Color3.fromRGB(220,0,40),
+    BorderSizePixel=0,
+    ZIndex=4,
+    Parent=MF
+})
+
+local SB = newInst("Frame",{
+    Size=UDim2.new(0,42,1,-34),
+    Position=UDim2.new(0,0,0,34),
+    BackgroundColor3=Color3.fromRGB(10,10,13),
+    BorderSizePixel=0,
+    ZIndex=5,
+    Parent=MF
+})
+newInst("UIListLayout",{
+    Padding=UDim.new(0,5),
+    HorizontalAlignment=Enum.HorizontalAlignment.Center,
+    VerticalAlignment=Enum.VerticalAlignment.Top,
+    Parent=SB
+})
+newInst("UIPadding",{PaddingTop=UDim.new(0,6),Parent=SB})
+
+local TC = newInst("Frame",{
+    Size=UDim2.new(1,-44,1,-34),
+    Position=UDim2.new(0,44,0,34),
+    BackgroundTransparency=1,
+    ZIndex=2,
+    Parent=MF
+})
+
+local Tabs = {}
+for _, n in ipairs({"Move","Combat","Visual","Misc"}) do
+    local sf = newInst("ScrollingFrame",{
+        Size=UDim2.new(1,0,1,0),
+        BackgroundTransparency=1,
+        Visible=false,
+        ScrollBarThickness=2,
+        ScrollBarImageColor3=Color3.fromRGB(220,0,40),
+        CanvasSize=UDim2.new(0,0,2,0),
+        ZIndex=3,
+        Parent=TC
+    })
+    Tabs[n]=sf
+    local ul=newInst("UIListLayout",{
+        Padding=UDim.new(0,5),
+        SortOrder=Enum.SortOrder.LayoutOrder,
+        Parent=sf
+    })
+    ul:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+        sf.CanvasSize = UDim2.new(0,0,0,ul.AbsoluteContentSize.Y+10)
+    end)
+    newInst("UIPadding",{
+        PaddingTop=UDim.new(0,4),
+        PaddingLeft=UDim.new(0,3),
+        PaddingRight=UDim.new(0,4),
+        Parent=sf
+    })
+end
+Tabs.Move.Visible=true
+
+local tabData={{"📁","Move"},{"⚔️","Combat"},{"👁️","Visual"},{"⚙️","Misc"}}
+local activeTB=nil
+for i,d in ipairs(tabData) do
+    local b=newInst("TextButton",{
+        Size=UDim2.new(0,34,0,34),
+        Text=d[1],
+        TextSize=17,
+        BackgroundColor3=(i==1) and Color3.fromRGB(200,0,35) or Color3.fromRGB(26,26,34),
+        TextColor3=Color3.fromRGB(255,255,255),
+        ZIndex=6,
+        Parent=SB
+    })
+    corner(7,b)
+    if i==1 then activeTB=b end
+    local tn=d[2]
+    b.MouseButton1Click:Connect(function()
+        for _,t in pairs(Tabs) do t.Visible=false end
+        Tabs[tn].Visible=true
+        if activeTB then activeTB.BackgroundColor3=Color3.fromRGB(26,26,34) end
+        b.BackgroundColor3=Color3.fromRGB(200,0,35)
+        activeTB=b
+    end)
+end
+
+TBtn.MouseButton1Click:Connect(function()
+    MF.Visible=not MF.Visible
+end)local function sec(parent,text)
+    local f=newInst("Frame",{
+        Size=UDim2.new(1,-4,0,20),
+        BackgroundColor3=Color3.fromRGB(200,0,35),
+        BackgroundTransparency=0.75,
+        BorderSizePixel=0,
+        ZIndex=4,
+        Parent=parent
+    })
+    corner(4,f)
+    newInst("TextLabel",{
+        Size=UDim2.new(1,0,1,0),
+        Text="  "..text,
+        TextColor3=Color3.fromRGB(255,100,100),
+        BackgroundTransparency=1,
+        Font=Enum.Font.SourceSansBold,
+        TextSize=11,
+        TextXAlignment=Enum.TextXAlignment.Left,
+        ZIndex=5,
+        Parent=f
+    })
+end
+
+local function tog(parent,text,cb)
+    local f=newInst("Frame",{
+        Size=UDim2.new(1,-4,0,35),
+        BackgroundColor3=Color3.fromRGB(20,20,26),
+        BorderSizePixel=0,
+        ZIndex=4,
+        Parent=parent
+    })
+    corner(7,f)
+    newInst("TextLabel",{
+        Size=UDim2.new(0.7,0,1,0),
+        Position=UDim2.new(0.03,0,0,0),
+        Text=text,
+        TextColor3=Color3.fromRGB(215,215,215),
+        TextXAlignment=Enum.TextXAlignment.Left,
+        BackgroundTransparency=1,
+        Font=Enum.Font.SourceSans,
+        TextSize=12,
+        ZIndex=5,
+        Parent=f
+    })
+    local b=newInst("TextButton",{
+        Size=UDim2.new(0,44,0,21),
+        Position=UDim2.new(1,-48,0.5,-10),
+        Text="OFF",
+        BackgroundColor3=Color3.fromRGB(130,0,0),
+        TextColor3=Color3.fromRGB(255,255,255),
+        Font=Enum.Font.SourceSansBold,
+        TextSize=11,
+        ZIndex=5,
+        Parent=f
+    })
+    corner(5,b)
+    local on=false
+    b.MouseButton1Click:Connect(function()
+        on=not on
+        b.Text=on and "ON" or "OFF"
+        b.BackgroundColor3=on and Color3.fromRGB(0,125,0) or Color3.fromRGB(130,0,0)
+        pcall(cb,on)
+    end)
+end
+
+local function sld(parent,text,mn,mx,def,cb)
+    local f=newInst("Frame",{
+        Size=UDim2.new(1,-4,0,42),
+        BackgroundColor3=Color3.fromRGB(20,20,26),
+        BorderSizePixel=0,
+        ZIndex=4,
+        Parent=parent
+    })
+    corner(7,f)
+    local lbl=newInst("TextLabel",{
+        Size=UDim2.new(1,-8,0,18),
+        Position=UDim2.new(0,6,0,3),
+        Text=text..": "..def,
+        TextColor3=Color3.fromRGB(200,200,200),
+        BackgroundTransparency=1,
+        Font=Enum.Font.SourceSans,
+        TextSize=11,
+        TextXAlignment=Enum.TextXAlignment.Left,
+        ZIndex=5,
+        Parent=f
+    })
+    local bg=newInst("Frame",{
+        Size=UDim2.new(0.9,0,0,6),
+        Position=UDim2.new(0.05,0,1,-11),
+        BackgroundColor3=Color3.fromRGB(38,38,46),
+        BorderSizePixel=0,
+        ZIndex=5,
+        Parent=f
+    })
+    corner(3,bg)
+    local fill=newInst("Frame",{
+        Size=UDim2.new((def-mn)/(mx-mn),0,1,0),
+        BackgroundColor3=Color3.fromRGB(200,0,35),
+        BorderSizePixel=0,
+        ZIndex=6,
+        Parent=bg
+    })
+    corner(3,fill)
+    local drag=false
+    local function upd(x)
+        local r=math.clamp((x-bg.AbsolutePosition.X)/bg.AbsoluteSize.X,0,1)
+        fill.Size=UDim2.new(r,0,1,0)
+        local v=math.floor(mn+(mx-mn)*r)
+        lbl.Text=text..": "..v
+        pcall(cb,v)
+    end
+    bg.InputBegan:Connect(function(i)
+        if i.UserInputType==Enum.UserInputType.MouseButton1
+        or i.UserInputType==Enum.UserInputType.Touch then
+            drag=true; upd(i.Position.X)
+        end
+    end)
+    UIS.InputChanged:Connect(function(i)
+        if drag and (i.UserInputType==Enum.UserInputType.MouseMovement
+        or i.UserInputType==Enum.UserInputType.Touch) then
+            upd(i.Position.X)
+        end
+    end)
+    UIS.InputEnded:Connect(function(i)
+        if i.UserInputType==Enum.UserInputType.MouseButton1
+        or i.UserInputType==Enum.UserInputType.Touch then
+            drag=false
+        end
+    end)
+end
+
+local function btn(parent,text,bg,cb)
+    local b=newInst("TextButton",{
+        Size=UDim2.new(1,-4,0,32),
+        BackgroundColor3=bg,
+        TextColor3=Color3.fromRGB(255,255,255),
+        Font=Enum.Font.SourceSansBold,
+        TextSize=12,
+        Text=text,
+        ZIndex=5,
+        Parent=parent
+    })
+    corner(7,b)
+    b.MouseButton1Click:Connect(function() pcall(cb,b) end)
+    return b
+end
+
+sec(Tabs.Move,"— การเคลื่อนที่ —")
+
+tog(Tabs.Move,"⚡ วิ่งเร็ว (Speed)",function(on)
+    S.Speed=on
+    if not on then pcall(function()
+        local h=LP.Character:FindFirstChildOfClass("Humanoid")
+        if h then h.WalkSpeed=16 end
+    end) end
+end)
+sld(Tabs.Move,"ความเร็ว",16,500,50,function(v) S.SpeedVal=v end)
+
+tog(Tabs.Move,"🦘 กระโดดสูง (Jump)",function(on)
+    S.Jump=on
+    if not on then pcall(function()
+        local h=LP.Character:FindFirstChildOfClass("Humanoid")
+        if h then h.UseJumpPower=true; h.JumpPower=50 end
+    end) end
+end)
+sld(Tabs.Move,"ความสูง",50,500,80,function(v) S.JumpVal=v end)
+
+tog(Tabs.Move,"♾️ Inf Jump",function(on) S.InfJump=on end)
+
+tog(Tabs.Move,"🚀 บิน (Fly)",function(on)
+    S.Fly=on
+    local char=LP.Character
+    if not char then return end
+    local hrp=char:FindFirstChild("HumanoidRootPart")
+    local hum=char:FindFirstChildOfClass("Humanoid")
+    if not hrp then return end
+
+    pcall(function()
+        if hrp:FindFirstChild("NB") then hrp.NB:Destroy() end
+        if hrp:FindFirstChild("NG") then hrp.NG:Destroy() end
+    end)
+
+    if on then
+        if hum then hum.PlatformStand=true end
+        FlyVel=newInst("BodyVelocity",{
+            Name="NB",
+            MaxForce=Vector3.new(1e9,1e9,1e9),
+            Velocity=Vector3.zero,
+            Parent=hrp
+        })
+        FlyGyro=newInst("BodyGyro",{
+            Name="NG",
+            MaxTorque=Vector3.new(1e9,1e9,1e9),
+            P=3000,
+            D=500,
+            CFrame=hrp.CFrame,
+            Parent=hrp
+        })
+
+        task.spawn(function()
+            while S.Fly and hrp and hrp.Parent do
+                task.wait()
+                pcall(function()
+                    local hm = LP.Character and LP.Character:FindFirstChildOfClass("Humanoid")
+                    if not hm or not FlyVel or not FlyGyro then return end
+
+                    local cf = Cam.CFrame
+                    local move = hm.MoveDirection
+
+                    if move.Magnitude > 0.05 then
+                        local dir = (cf.LookVector * -move.Z + cf.RightVector * move.X)
+                        if dir.Magnitude > 0 then
+                            FlyVel.Velocity = dir.Unit * S.FlyVal
+                        end
+                    else
+                        FlyVel.Velocity = FlyVel.Velocity * 0.8
+                    end
+
+                    FlyGyro.CFrame = CFrame.new(hrp.Position, hrp.Position + cf.LookVector)
+                end)
+            end
+        end)
+    else
+        if hum then hum.PlatformStand=false end
+        FlyVel=nil
+        FlyGyro=nil
+    end
+end)
+sld(Tabs.Move,"ความเร็วบิน",1,300,50,function(v) S.FlyVal=v end)
+
+tog(Tabs.Move,"👻 เดินทะลุ (Noclip)",function(on) S.Noclip=on end)
+
+tog(Tabs.Move,"🌫️ Air Walk",function(on)
+    S.AirWalk=on
+    if on then
+        local hrp = LP.Character and LP.Character:FindFirstChild("HumanoidRootPart")
+        if hrp then
+            AirWalkY = hrp.Position.Y - 3
+        end
+    else
+        if AirPart then
+            AirPart:Destroy()
+            AirPart = nil
+        end
+        AirWalkY = nil
+    end
+end)sec(Tabs.Combat,"— การต่อสู้ —")
+
+tog(Tabs.Combat,"🎯 Aimbot",function(on) S.Aimbot=on end)
+sld(Tabs.Combat,"Smooth",1,20,3,function(v) S.AimSmooth=v/100 end)
+
+tog(Tabs.Combat,"💀 Kill Aura",function(on) S.KillAura=on end)
+sld(Tabs.Combat,"ระยะ",5,60,15,function(v) S.AuraRange=v end)
+
+tog(Tabs.Combat,"🛡️ God Mode",function(on)
+    S.GodMode=on
+    if on then task.spawn(function()
+        while S.GodMode do
+            task.wait(0.1)
+            pcall(function()
+                local h=LP.Character:FindFirstChildOfClass("Humanoid")
+                if h then h.Health=h.MaxHealth end
+            end)
+        end
+    end) end
+end)
+
+sec(Tabs.Combat,"— ดีดคน —")
+
+tog(Tabs.Combat,"🌀 ดีดคนกระเด็น (Fling)",function(on)
+    S.Fling = on
+    local char = LP.Character
+    local hrp = char and char:FindFirstChild("HumanoidRootPart")
+
+    pcall(function()
+        if hrp and hrp:FindFirstChild("FlingAV") then
+            hrp.FlingAV:Destroy()
+        end
+    end)
+    FlingAV = nil
+
+    if on then
+        S.Noclip = true
+        if hrp then
+            FlingAV = newInst("BodyAngularVelocity",{
+                Name = "FlingAV",
+                MaxTorque = Vector3.new(0, math.huge, 0),
+                AngularVelocity = Vector3.new(0, S.FlingSpeed * 40, 0),
+                Parent = hrp
+            })
+        end
+    end
+end)
+sld(Tabs.Combat,"ความเร็วหมุน",1,10,5,function(v)
+    S.FlingSpeed = v
+    if FlingAV and FlingAV.Parent then
+        FlingAV.AngularVelocity = Vector3.new(0, v * 40, 0)
+    end
+end)
+
+sec(Tabs.Visual,"— วิชวล —")
+
+tog(Tabs.Visual,"🔴 ESP (ชื่อ+HP)",function(on)
+    S.ESP=on
+    if not on then
+        for _,p in pairs(Players:GetPlayers()) do
+            pcall(function()
+                if p\~=LP and p.Character then
+                    local b=p.Character:FindFirstChild("NESP")
+                    if b then b:Destroy() end
+                end
+            end)
+        end
+        return
+    end
+    task.spawn(function()
+        while S.ESP do
+            task.wait(0.4)
+            for _,p in pairs(Players:GetPlayers()) do
+                pcall(function()
+                    if p==LP or not p.Character then return end
+                    local hrp=p.Character:FindFirstChild("HumanoidRootPart")
+                    local hum=p.Character:FindFirstChildOfClass("Humanoid")
+                    if not hrp then return end
+                    local bill=hrp:FindFirstChild("NESP")
+                    if not bill then
+                        bill=newInst("BillboardGui",{
+                            Name="NESP",Size=UDim2.new(0,90,0,44),
+                            StudsOffset=Vector3.new(0,3.5,0),
+                            AlwaysOnTop=true,Parent=hrp
+                        })
+                        newInst("TextLabel",{
+                            Name="NL",Size=UDim2.new(1,0,0.5,0),
+                            BackgroundTransparency=1,Font=Enum.Font.SourceSansBold,
+                            TextSize=12,TextColor3=Color3.fromRGB(255,80,80),
+                            Text=p.Name,Parent=bill
+                        })
+                        newInst("TextLabel",{
+                            Name="HL",Size=UDim2.new(1,0,0.5,0),
+                            Position=UDim2.new(0,0,0.5,0),
+                            BackgroundTransparency=1,Font=Enum.Font.SourceSans,
+                            TextSize=10,TextColor3=Color3.fromRGB(100,255,100),
+                            Parent=bill
+                        })
+                    end
+                    local hl=bill:FindFirstChild("HL")
+                    if hl and hum then
+                        hl.Text="HP:"..math.floor(hum.Health).."/"..math.floor(hum.MaxHealth)
+                    end
+                end)
+            end
+        end
+    end)
+end)
+
+tog(Tabs.Visual,"☀️ Fullbright",function(on)
+    pcall(function()
+        Lighting.Brightness=on and 2 or 1
+        Lighting.ClockTime=14
+        Lighting.FogEnd=on and 999999 or 100000
+        Lighting.GlobalShadows=not on
+        local c=on and Color3.fromRGB(255,255,255) or Color3.fromRGB(127,127,127)
+        Lighting.Ambient=c
+        Lighting.OutdoorAmbient=c
+    end)
+end)
+
+sec(Tabs.Misc,"— อื่นๆ —")
+
+tog(Tabs.Misc,"🛡️ Anti-AFK",function(on)
+    S.AntiAFK=on
+    if on then task.spawn(function()
+        while S.AntiAFK do
+            task.wait(55)
+            pcall(function()
+                local vu=game:GetService("VirtualUser")
+                vu:Button2Down(Vector2.new(0,0),CFrame.new())
+                task.wait(0.1)
+                vu:Button2Up(Vector2.new(0,0),CFrame.new())
+            end)
+        end
+    end) end
+end)
+
+tog(Tabs.Misc,"🔄 Auto Rejoin",function(on)
+    S.AutoRejoin=on
+    if on then task.spawn(function()
+        while S.AutoRejoin do
+            task.wait(2)
+            pcall(function()
+                local h=LP.Character and LP.Character:FindFirstChildOfClass("Humanoid")
+                if h and h.Health<=0 then
+                    task.wait(3)
+                    game:GetService("TeleportService"):Teleport(game.PlaceId,LP)
+                end
+            end)
+        end
+    end) end
+end)
+
+sec(Tabs.Misc,"— เทเลพอร์ต —")
+
+local TPDrop=newInst("TextButton",{
+    Size=UDim2.new(1,-4,0,32),
+    Text="👤 เลือกผู้เล่น (กดสลับ)",
+    BackgroundColor3=Color3.fromRGB(26,26,36),
+    TextColor3=Color3.fromRGB(215,215,215),
+    Font=Enum.Font.SourceSans,
+    TextSize=11,ZIndex=5,Parent=Tabs.Misc
+})
+corner(7,TPDrop)
+TPDrop.MouseButton1Click:Connect(function()
+    local list={}
+    for _,p in pairs(Players:GetPlayers()) do
+        if p\~=LP then table.insert(list,p) end
+    end
+    if #list==0 then
+        TPDrop.Text="❌ ไม่มีผู้เล่นอื่น"
+        task.wait(2); TPDrop.Text="👤 เลือกผู้เล่น (กดสลับ)"
+        return
+    end
+    local idx=1
+    for i,p in ipairs(list) do if p==SelTP then idx=i; break end end
+    idx=(idx%#list)+1
+    SelTP=list[idx]
+    TPDrop.Text="👤 เลือก: "..SelTP.Name
+end)
+
+btn(Tabs.Misc,"🚀 TP ไปหาผู้เล่น",Color3.fromRGB(0,95,175),function(b)
+    if not SelTP then
+        b.Text="❌ เลือกผู้เล่นก่อน!"
+        task.wait(2); b.Text="🚀 TP ไปหาผู้เล่น"; return
+    end
+    local hrp=LP.Character and LP.Character:FindFirstChild("HumanoidRootPart")
+    local tHRP=SelTP.Character and SelTP.Character:FindFirstChild("HumanoidRootPart")
+    if not hrp or not tHRP then
+        b.Text="❌ ผู้เล่นออกจากเกม"
+        task.wait(2); b.Text="🚀 TP ไปหาผู้เล่น"; return
+    end
+    hrp.CFrame=tHRP.CFrame*CFrame.new(0,0,-2.5)
+    b.Text="✅ TP แล้ว!"
+    task.wait(2); b.Text="🚀 TP ไปหาผู้เล่น"
+end)local CF=newInst("Frame",{
+    Size=UDim2.new(1,-4,0,76),
+    BackgroundColor3=Color3.fromRGB(20,20,26),
+    BorderSizePixel=0,ZIndex=4,Parent=Tabs.Misc
+})
+corner(7,CF)
+newInst("TextLabel",{
+    Size=UDim2.new(1,0,0,18),Position=UDim2.new(0,6,0,2),
+    Text="📍 TP พิกัด XYZ:",TextColor3=Color3.fromRGB(195,195,195),
+    BackgroundTransparency=1,Font=Enum.Font.SourceSansBold,
+    TextSize=11,TextXAlignment=Enum.TextXAlignment.Left,ZIndex=5,Parent=CF
+})
+local CI={}
+for i,ax in ipairs({"X","Y","Z"}) do
+    local bx=newInst("TextBox",{
+        Size=UDim2.new(0.28,0,0,26),
+        Position=UDim2.new((i-1)*0.33+0.02,0,0,22),
+        PlaceholderText=ax,Text="",
+        BackgroundColor3=Color3.fromRGB(28,28,38),
+        TextColor3=Color3.fromRGB(255,255,255),
+        Font=Enum.Font.SourceSans,TextSize=12,
+        ClearTextOnFocus=false,ZIndex=6,Parent=CF
+    })
+    corner(5,bx); CI[ax]=bx
+end
+local TCB=newInst("TextButton",{
+    Size=UDim2.new(0.96,0,0,20),Position=UDim2.new(0.02,0,0,52),
+    Text="🎯 TP ไปพิกัด",BackgroundColor3=Color3.fromRGB(0,95,175),
+    TextColor3=Color3.fromRGB(255,255,255),Font=Enum.Font.SourceSansBold,
+    TextSize=11,ZIndex=6,Parent=CF
+})
+corner(5,TCB)
+TCB.MouseButton1Click:Connect(function()
+    local x,y,z=tonumber(CI.X.Text),tonumber(CI.Y.Text),tonumber(CI.Z.Text)
+    if not x or not y or not z then
+        TCB.Text="❌ กรอก X Y Z ให้ครบ!"
+        task.wait(2); TCB.Text="🎯 TP ไปพิกัด"; return
+    end
+    local hrp=LP.Character and LP.Character:FindFirstChild("HumanoidRootPart")
+    if hrp then
+        hrp.CFrame=CFrame.new(x,y,z)
+        TCB.Text="✅ TP แล้ว!"
+        task.wait(2); TCB.Text="🎯 TP ไปพิกัด"
+    end
+end)
+
+btn(Tabs.Misc,"💾 บันทึกตำแหน่งนี้",Color3.fromRGB(75,55,0),function(b)
+    local hrp=LP.Character and LP.Character:FindFirstChild("HumanoidRootPart")
+    if hrp then
+        SavedPos=hrp.CFrame
+        local p=hrp.Position
+        b.Text=string.format("✅ (%.0f,%.0f,%.0f)",p.X,p.Y,p.Z)
+        task.wait(3); b.Text="💾 บันทึกตำแหน่งนี้"
+    end
+end)
+
+btn(Tabs.Misc,"↩️ กลับตำแหน่งที่บันทึก",Color3.fromRGB(0,75,75),function(b)
+    if not SavedPos then
+        b.Text="❌ ยังไม่ได้บันทึก!"
+        task.wait(2); b.Text="↩️ กลับตำแหน่งที่บันทึก"; return
+    end
+    local hrp=LP.Character and LP.Character:FindFirstChild("HumanoidRootPart")
+    if hrp then
+        hrp.CFrame=SavedPos
+        b.Text="✅ กลับแล้ว!"
+        task.wait(2); b.Text="↩️ กลับตำแหน่งที่บันทึก"
+    end
+end)
+
+local IB=newInst("Frame",{
+    Size=UDim2.new(1,-4,0,40),
+    BackgroundColor3=Color3.fromRGB(16,16,22),
+    BorderSizePixel=0,ZIndex=4,Parent=Tabs.Misc
+})
+corner(7,IB)
+local IL=newInst("TextLabel",{
+    Size=UDim2.new(1,-10,1,-6),Position=UDim2.new(0,5,0,3),
+    Text="กำลังโหลด...",TextColor3=Color3.fromRGB(120,120,120),
+    BackgroundTransparency=1,Font=Enum.Font.SourceSans,TextSize=10,
+    TextXAlignment=Enum.TextXAlignment.Left,
+    TextYAlignment=Enum.TextYAlignment.Top,
+    TextWrapped=true,ZIndex=5,Parent=IB
+})
+
+RunService.Heartbeat:Connect(function()
+    pcall(function()
+        local char=LP.Character
+        if not char then return end
+        local hum=char:FindFirstChildOfClass("Humanoid")
+        local hrp=char:FindFirstChild("HumanoidRootPart")
+
+        if S.Speed and hum then hum.WalkSpeed=S.SpeedVal end
+
+        if S.Jump and hum then
+            hum.UseJumpPower=true
+            hum.JumpPower=S.JumpVal
+        end
+
+        if S.Noclip or S.Fling then
+            for _,v in pairs(char:GetDescendants()) do
+                if v:IsA("BasePart") then
+                    v.CanCollide = false
+                end
+            end
+        end
+
+        if S.AirWalk and hrp then
+            if not AirPart or not AirPart.Parent then
+                AirPart = newInst("Part",{
+                    Name = "NAMO_Air",
+                    Size = Vector3.new(6, 1, 6),
+                    Anchored = true,
+                    Transparency = 1,
+                    CanCollide = true,
+                    Parent = WS
+                })
+            end
+            local y = AirWalkY or (hrp.Position.Y - 3)
+            AirPart.CFrame = CFrame.new(hrp.Position.X, y, hrp.Position.Z)
+        elseif not S.AirWalk and AirPart then
+            AirPart:Destroy()
+            AirPart = nil
+            AirWalkY = nil
+        end
+
+        if S.KillAura and hrp then
+            local tool=char:FindFirstChildOfClass("Tool")
+            for _,p in pairs(Players:GetPlayers()) do
+                if p\~=LP and p.Character then
+                    local pHRP=p.Character:FindFirstChild("HumanoidRootPart")
+                    if pHRP and (pHRP.Position-hrp.Position).Magnitude<=S.AuraRange then
+                        hrp.CFrame=pHRP.CFrame*CFrame.new(0,0,-2.5)
+                        if tool then
+                            pcall(function()
+                                local re=tool:FindFirstChildOfClass("RemoteEvent")
+                                if re then re:FireServer() end
+                            end)
+                        end
+                    end
+                end
+            end
+        end
+
+        if S.Aimbot then
+            local cl,mn=nil,math.huge
+            for _,p in pairs(Players:GetPlayers()) do
+                if p\~=LP and p.Character then
+                    local pH=p.Character:FindFirstChild("HumanoidRootPart")
+                    local pM=p.Character:FindFirstChildOfClass("Humanoid")
+                    if pH and pM and pM.Health>0 then
+                        local d=(pH.Position-(hrp and hrp.Position or Vector3.zero)).Magnitude
+                        if d<mn then mn=d; cl=p end
+                    end
+                end
+            end
+            if cl and cl.Character and cl.Character:FindFirstChild("HumanoidRootPart") then
+                Cam.CFrame=Cam.CFrame:Lerp(
+                    CFrame.new(Cam.CFrame.Position,cl.Character.HumanoidRootPart.Position),
+                    S.AimSmooth
+                )
+            end
+        end
+
+        if S.Fling and FlingAV and FlingAV.Parent then
+            FlingAV.AngularVelocity = Vector3.new(0, S.FlingSpeed * 40, 0)
+        end
+    end)
+end)
+
+UIS.JumpRequest:Connect(function()
+    if S.InfJump then pcall(function()
+        local h=LP.Character:FindFirstChildOfClass("Humanoid")
+        if h then h:ChangeState(Enum.HumanoidStateType.Jumping) end
+    end) end
+end)
+
+local function hookChar(char)
+    task.wait(0.5)
+    local hum=char:WaitForChild("Humanoid",5)
+    if not hum then return end
+    hum:GetPropertyChangedSignal("WalkSpeed"):Connect(function()
+        if S.Speed then task.wait(); hum.WalkSpeed=S.SpeedVal end
+    end)
+    hum:GetPropertyChangedSignal("JumpPower"):Connect(function()
+        if S.Jump then
+            task.wait()
+            hum.UseJumpPower=true
+            hum.JumpPower=S.JumpVal
+        end
+    end)
+end
+if LP.Character then hookChar(LP.Character) end
+LP.CharacterAdded:Connect(function(char)
+    S.Fly=false
+    S.Fling=false
+    if AirPart then AirPart:Destroy(); AirPart=nil end
+    AirWalkY = nil
+    FlyVel=nil; FlyGyro=nil; FlingAV=nil
+    hookChar(char)
+end)
+
+task.spawn(function()
+    while true do
+        task.wait(2)
+        pcall(function()
+            local ping=math.floor(LP:GetNetworkPing()*1000)
+            local fps=math.floor(1/RunService.Heartbeat:Wait())
+            IL.Text=string.format("👤 %s   📡 %dms   🖥️ %dfps",LP.Name,ping,fps)
+        end)
+    end
+end)
+
+VBtn.MouseButton1Click:Connect(function()
+    if (KInput.Text or ""):gsub("%s+","") == KEY then
+        KGui:Destroy()
+        MGui.Enabled=true
+        MF.Visible=true
+    else
+        KInput.Text=""
+        KInput.PlaceholderText="❌ คีย์ผิด!"
+        KStatus.Text="❌ คีย์ผิด กรุณาลองใหม่"
+        task.wait(2.5)
+        pcall(function()
+            KStatus.Text=""
+            KInput.PlaceholderText="ใส่คีย์..."
+        end)
+    end
+end)
+
+print("[NAMO V6 FIXED] ✅ โหลดสำเร็จ | Key: KEY_GOD_XD_V6")
